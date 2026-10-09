@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+*.tmp
+
+# Données volumineuses : à garder sur Drive, pas sur GitHub
+data/
+output/
+
+# Échantillons : seul le rapport est suivi
+samples/*.jsonl
