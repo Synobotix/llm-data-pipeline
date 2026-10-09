@@ -22,6 +22,7 @@ CATALOG = {
         "field": "text",
         "license": "ODC-By 1.0",
         "note": "Web français filtré et dédoublonné (CommonCrawl)",
+        "web_cleanup": True,  # retire menus, lignes courtes et lignes répétées
     },
     "wikipedia_fr": {
         "path": "wikimedia/wikipedia",
@@ -49,12 +50,17 @@ CATALOG = {
         "field": "conversation",
         "license": "MIT",
         "note": "Conversations utilisateur/assistant en français (~276K)",
+        # puzzles de logique traduits (variables x_8, x_12...) et réponses incohérentes
+        "exclude_regex": r"\bx_\d+\b",
     },
 }
 
 # ---------------------------------------------------------------------------
 # Extraction du texte
 # ---------------------------------------------------------------------------
+
+
+ROLE_NAMES = {"user": "Utilisateur", "assistant": "Assistant", "human": "Utilisateur", "bot": "Assistant"}
 
 
 def extract_text(example: dict, spec: dict) -> str:
@@ -75,6 +81,7 @@ def extract_text(example: dict, spec: dict) -> str:
             role = turn.get("role") or turn.get("speaker")
         else:
             text, role = str(turn), None
+        role = ROLE_NAMES.get(str(role).lower(), role) if role else None
         if not role:
             role = "Utilisateur" if i % 2 == 0 else "Assistant"
         if text.strip():
@@ -135,3 +142,42 @@ def quality_check(
             return False, "repetition"
 
     return True, "ok"
+
+
+# ---------------------------------------------------------------------------
+# Nettoyage spécifique au web (menus, titres isolés, lignes répétées)
+# ---------------------------------------------------------------------------
+
+def web_cleanup(text: str, min_line_words: int = 4) -> str:
+    """
+    Garde les lignes d'au moins `min_line_words` mots (les menus de navigation
+    et titres isolés sont courts) et supprime les lignes déjà vues dans le
+    document. Le texte restant est du texte continu.
+    """
+    seen = set()
+    kept = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if len(line.split()) < min_line_words:
+            continue
+        if line in seen:
+            continue
+        seen.add(line)
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def process(example: dict, spec: dict) -> tuple[str, bool, str]:
+    """
+    Chaîne complète : extraction, nettoyage, filtres du dataset, filtre qualité.
+    Retourne (texte, ok, raison).
+    """
+    text = extract_text(example, spec)
+    pattern = spec.get("exclude_regex")
+    if pattern and re.search(pattern, text):
+        return "", False, "exclu_motif"
+    text = clean_text(text)
+    if spec.get("web_cleanup"):
+        text = web_cleanup(text)
+    ok, reason = quality_check(text)
+    return text, ok, reason

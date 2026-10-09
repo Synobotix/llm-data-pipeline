@@ -20,7 +20,7 @@ from collections import Counter
 
 from datasets import load_dataset
 
-from dataset_utils import CATALOG, clean_text, extract_text, quality_check
+from dataset_utils import CATALOG, process
 
 OUT_DIR = "samples"
 
@@ -36,8 +36,7 @@ def sample_one(name: str, spec: dict, n: int) -> dict:
     seen = 0
     for example in ds:
         seen += 1
-        text = clean_text(extract_text(example, spec))
-        ok, reason = quality_check(text)
+        text, ok, reason = process(example, spec)
         reasons[reason] += 1
         if ok:
             kept.append(text)

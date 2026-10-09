@@ -79,6 +79,13 @@ Un document est rejeté si :
 | `ratio_alpha` | moins de 60 % de caractères alphabétiques |
 | `repetition` | plus de 30 % de séquences de 4 mots dupliquées |
 
+Filtres propres à certains datasets (options du `CATALOG`) :
+
+| Dataset | Option | Effet |
+|---|---|---|
+| `fineweb2_fr` | `web_cleanup` | supprime les lignes de moins de 4 mots (menus, titres isolés) et les lignes répétées dans un document |
+| `french_instruct` | `exclude_regex` | écarte les puzzles de logique traduits (variables `x_8`, `x_12`…) ; les rôles `user`/`assistant` deviennent `Utilisateur`/`Assistant` |
+
 Les seuils sont des arguments de `quality_check` dans `dataset_utils.py`.
 
 ## Où stocker quoi
@@ -117,6 +124,6 @@ Vérifié hors-ligne, avec un faux dataset de streaming :
 
 ## Suite prévue
 
-1. Valider les datasets avec `samples/report.md`.
+1. ~~Valider les datasets avec `samples/report.md`~~ : fait, filtres ajoutés pour FineWeb-2 et French Instruct (relancer `sample_datasets.py` pour les vérifier sur de vrais exemples).
 2. Télécharger les datasets retenus vers Drive.
 3. Entraîner le tokenizer BPE sur ces données, puis relancer l'entraînement du Student.

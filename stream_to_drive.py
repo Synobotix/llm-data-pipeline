@@ -29,7 +29,7 @@ import sys
 
 from datasets import load_dataset
 
-from dataset_utils import CATALOG, clean_text, extract_text, quality_check
+from dataset_utils import CATALOG, process
 
 SHARD_SIZE = 10_000  # documents maximum par fichier
 SHARD_MAX_BYTES = 50 * 1024 * 1024  # 50 Mo maximum par fichier
@@ -104,8 +104,7 @@ def main():
 
     for example in ds:
         seen += 1
-        text = clean_text(extract_text(example, spec))
-        ok, _ = quality_check(text)
+        text, ok, _ = process(example, spec)
         if not ok:
             continue
         buffer.append(text)
